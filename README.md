@@ -6,7 +6,7 @@ To install and run simply follow these steps:
 
 2)  Open your terminal and run `node server.js`
 
-3)  Your server is now available at `http://localhost:3000/`
+3)  Your server is now available at `http://localhost:3000`
 
 4)  Request GET '/findXYZ' API to `http://localhost:3000` to find value of x, y and z from static value
 
@@ -17,6 +17,6 @@ To install and run simply follow these steps:
 "items":["x", "5", "9","15", "23", "y", "z", "a", "b","c"]
 }
 
-Heroku link:
+Heroku link: `https://agile-crag-49831.herokuapp.com`
 
 
