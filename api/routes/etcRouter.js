@@ -11,9 +11,15 @@ app.get('/findXYZ', (req, res) => {
   res.send(helper.findXYZ(items));
 });
 
-app.post('/findXYZ', (req, res) => {
+app.post('/findXYZ', (req, res, next) => {
   const { items } = req.body;
+  if (!items) return next(new Error('ERROR: Please send JSON object with request'));
+
   res.send(helper.findXYZ(items));
+});
+
+app.get('/findPlace', (req, res) => {
+  res.send('WIP');
 });
 
 module.exports = router;

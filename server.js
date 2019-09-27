@@ -18,7 +18,6 @@ app.use(etcRouter);
 app.use(errorHandler);
 
 function errorHandler(err, req, res, next) {
-  console.error(err);
   let newError = {
     message: err.message,
     location: err.location
