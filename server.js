@@ -1,33 +1,31 @@
-const express = require("express");
+const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
-const app = express();
-
-app.use(cors());
+app = express();
+port = process.env.PORT || 3000;
 
 //Use body-parser to parser request body
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(cors());
 
 //Use router
 const etcRouter = require('./api/routes/etcRouter');
 app.use(etcRouter);
 
 //Use custom express error handler
-app.use(errorHandler)
+app.use(errorHandler);
 
-function errorHandler (err, req, res, next) {
-  console.error(err)
+function errorHandler(err, req, res, next) {
+  console.error(err);
   let newError = {
     message: err.message,
     location: err.location
-  }
+  };
   res.status(500).send(newError);
 }
 
-
-const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`listening on ${port}`);
 });

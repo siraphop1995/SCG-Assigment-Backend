@@ -1,5 +1,4 @@
-const findXYZ = () => {
-  const items = ["x", "5", "9", "15", "23", "y", "z"];
+const findXYZ = (items) => {
 
   //Find location of X, Y and Z as well as add index
   const newItems = items
