@@ -20,11 +20,12 @@ app.post('/findXYZ', (req, res, next) => {
 });
 
 app.get('/findPlace', async (req, res) => {
-//   const key = 'AIzaSyCoVGJYwRwjsmawIQtF5gl1jO_sFUjpy0E';
-//   const input = 'Museum%20of%20Contemporary%20Art%20Australia';
-//   const fields = 'photos,formatted_address,name,rating,opening_hours,geometry';
-//   const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${input}&inputtype=textquery&fields=${fields}&key=${key}`;
-  
+  const key = 'AIzaSyCoVGJYwRwjsmawIQtF5gl1jO_sFUjpy0E';
+  const query = 'restaurant';
+  const location = '13.818981%2C100.527861';
+  const radius = '5000';
+  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&location=${location}&radius=${radius}&key=${key}`;
+
   const respond = await axios.get(url);
   res.send(respond.data);
 });

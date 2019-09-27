@@ -12,7 +12,10 @@ app.use(cors());
 
 //Use router
 const etcRouter = require('./api/routes/etcRouter');
+const lineRouter = require('./api/routes/lineRouter');
+
 app.use(etcRouter);
+app.use(lineRouter);
 
 //Use custom express error handler
 app.use(errorHandler);
