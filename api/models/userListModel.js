@@ -8,10 +8,16 @@ const UserSchema = new Schema({
     Required: true
   },
   username: {
-    type: String
+    type: String,
+    Required: true
   },
   balance: {
-    type: Number
+    type: Number,
+    Required: true
+  },
+  earning: {
+    type: Number,
+    Required: true
   }
 });
 

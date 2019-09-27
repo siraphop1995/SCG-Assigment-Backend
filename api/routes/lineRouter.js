@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const mongoose = require('mongoose');
 const User = mongoose.model('Users');
+const History = mongoose.model('History');
+
 const line = require('@line/bot-sdk');
 const config = require('../../config.json');
 const { WebhookClient, Payload } = require('dialogflow-fulfillment');
@@ -76,7 +78,8 @@ app.post('/webhook', (req, res, next) => {
       let newUser = new User({
         lineId: data.source.userId,
         username: profile.displayName,
-        balance: 0
+        balance: 0,
+        earning: 0
       });
       await newUser.save();
       console.log(newUser);
@@ -96,7 +99,8 @@ app.post('/webhook', (req, res, next) => {
       let newUser = new User({
         lineId: data.source.userId,
         username: name,
-        balance: 0
+        balance: 0,
+        earning: 0
       });
       await newUser.save();
       console.log(newUser);
@@ -113,8 +117,13 @@ app.post('/webhook', (req, res, next) => {
     //check is user already created an account
     const user = await getUser(agent, data);
     if (!user) return;
-    console.log(user.balance);
+
     agent.add('Balance: ' + user.balance);
+    agent.add('Earning: ' + user.earning);
+    const history = await History.find({ owner: user.lineId });
+    for (let i = 0; i < history.length; i++) {
+      agent.add(`Spend total of ${history[i].value} on ${history[i].type}`);
+    }
   }
 
   //Add Intent Handler
@@ -126,6 +135,7 @@ app.post('/webhook', (req, res, next) => {
 
     const { value } = req.body.queryResult.parameters;
     user.balance += value;
+    user.earning += value;
     const newUser = await User.findByIdAndUpdate(user._id, user, { new: true });
 
     agent.add('Add: ' + value);
@@ -137,15 +147,33 @@ app.post('/webhook', (req, res, next) => {
     const { type, value } = req.body.queryResult.parameters;
     const { data } = req.body.originalDetectIntentRequest.payload;
 
+    const user = await getUser(agent, data);
+    if (!user) return;
     console.log(type, value);
-    const user = await User.findOne({ lineId: data.source.userId,  }, null);
 
-    agent.add('expense');
-  }
+    //First char to upper case
+    const newType = type.charAt(0).toUpperCase() + type.slice(1);
+    const history = await History.findOne({ owner: user.lineId, type: newType });
+    let newHistory = {};
+    if (!history) {
+      newHistory = new History({
+        owner: user.lineId,
+        type: newType,
+        value: value
+      });
 
-  //Delete Intent Handler
-  function deleteAction(agent) {
-    agent.add('delete');
+      await newHistory.save();
+      agent.add(`${newType} history does not exist`);
+      agent.add(`${newType} history created`);
+    } else {
+      history.value += value;
+      newHistory = await History.findByIdAndUpdate(history._id, history, { new: true });
+    }
+    user.balance -= value;
+    const newUser = await User.findByIdAndUpdate(user._id, user, { new: true });
+
+    agent.add(`Spend ${value} on ${newHistory.type}`);
+    agent.add('New balance: ' + newUser.balance);
   }
 
   let intentMap = new Map();
@@ -156,7 +184,6 @@ app.post('/webhook', (req, res, next) => {
   intentMap.set('Check', checkAction);
   intentMap.set('Add - Yes', addAction);
   intentMap.set('Expense - Yes', expenseAction);
-  intentMap.set('Delete', deleteAction);
 
   agent.handleRequest(intentMap);
 });
@@ -172,7 +199,6 @@ const getUser = async (agent, data) => {
     return user;
   }
   agent.add('You do not have account yet, please setup');
-
   return false;
 };
 

@@ -13,13 +13,6 @@ const HistorySchema = new Schema({
   value: {
     type: Number,
     Required: true
-  },
-  expense: {
-    type: Boolean,
-    Required: true
-  },
-  createdDate: {
-    type: Date
   }
 });
 
