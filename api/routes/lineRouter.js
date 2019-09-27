@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const mongoose = require('mongoose');
-const Users = mongoose.model('Users');
+const User = mongoose.model('Users');
 const line = require('@line/bot-sdk');
 const config = require('../../config.json');
 const { WebhookClient, Payload } = require('dialogflow-fulfillment');
@@ -40,11 +40,9 @@ app.post('/webhook', (req, res, next) => {
   async function createAction(agent) {
     const { data } = req.body.originalDetectIntentRequest.payload;
 
-    const user = await User.find({ lineId: data.source.userId }, null);
-    if (user.length >= 1) {
+    if (await getUser(agent, data)) {
       agent.add('You already have a wallet-bot account');
       return agent.add('Use "help" command to see possible action');
-
     }
 
     if (data.source.userId) {
@@ -90,22 +88,58 @@ app.post('/webhook', (req, res, next) => {
   }
 
   //Create - No Intent Handler
-  function createNoAction(agent) {
-    agent.add('checkNo');
+  async function createNoAction(agent) {
+    const { name } = req.body.queryResult.parameters;
+    try {
+      const { data } = req.body.originalDetectIntentRequest.payload;
+      const profile = await client.getProfile(data.source.userId);
+      let newUser = new User({
+        lineId: data.source.userId,
+        username: name,
+        balance: 0
+      });
+      await newUser.save();
+      console.log(newUser);
+      agent.add('Account created successfully');
+      agent.add('Use "help" command to see possible action');
+    } catch (err) {
+      next(err);
+    }
   }
 
   //Check Intent Handler
-  function checkAction(agent) {
-    agent.add('check');
+  async function checkAction(agent) {
+    const { data } = req.body.originalDetectIntentRequest.payload;
+    //check is user already created an account
+    const user = await getUser(agent, data);
+    if (!user) return;
+    console.log(user.balance);
+    agent.add('Balance: ' + user.balance);
   }
 
   //Add Intent Handler
-  function addAction(agent) {
-    agent.add('add');
+  async function addAction(agent) {
+    const { data } = req.body.originalDetectIntentRequest.payload;
+    //check is user already created an account
+    const user = await getUser(agent, data);
+    if (!user) return;
+
+    const { value } = req.body.queryResult.parameters;
+    user.balance += value;
+    const newUser = await User.findByIdAndUpdate(user._id, user, { new: true });
+
+    agent.add('Add: ' + value);
+    agent.add('New balance: ' + newUser.balance);
   }
 
   //Expense Intent Handler
-  function expenseAction(agent) {
+  async function expenseAction(agent) {
+    const { type, value } = req.body.queryResult.parameters;
+    const { data } = req.body.originalDetectIntentRequest.payload;
+
+    console.log(type, value);
+    const user = await User.findOne({ lineId: data.source.userId,  }, null);
+
     agent.add('expense');
   }
 
@@ -118,10 +152,10 @@ app.post('/webhook', (req, res, next) => {
   intentMap.set('Default Fallback Intent', defaultAction);
   intentMap.set('Create', createAction);
   intentMap.set('Create - Yes', createYesAction);
-  intentMap.set('Create - No', createNoAction);
+  intentMap.set('Create - No - Setup - Yes', createNoAction);
   intentMap.set('Check', checkAction);
-  intentMap.set('Add', addAction);
-  intentMap.set('Expense', expenseAction);
+  intentMap.set('Add - Yes', addAction);
+  intentMap.set('Expense - Yes', expenseAction);
   intentMap.set('Delete', deleteAction);
 
   agent.handleRequest(intentMap);
@@ -130,6 +164,16 @@ app.post('/webhook', (req, res, next) => {
 const replyText = (token, texts) => {
   texts = Array.isArray(texts) ? texts : [texts];
   return client.replyMessage(token, texts.map(text => ({ type: 'text', text })));
+};
+
+const getUser = async (agent, data) => {
+  const user = await User.findOne({ lineId: data.source.userId }, null);
+  if (user) {
+    return user;
+  }
+  agent.add('You do not have account yet, please setup');
+
+  return false;
 };
 
 module.exports = router;

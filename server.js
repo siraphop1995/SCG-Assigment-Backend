@@ -24,6 +24,7 @@ app.use(cors());
 
 //Mongoose model
 User = require('./api/models/userListModel');
+History = require('./api/models/historyListModel');
 
 //Use router
 const etcRouter = require('./api/routes/etcRouter');
