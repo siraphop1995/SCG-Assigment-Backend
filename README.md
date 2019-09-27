@@ -20,3 +20,14 @@ To install and run simply follow these steps:
 Heroku link: `https://agile-crag-49831.herokuapp.com`
 
 
+To use wallet-line-bot please use the following command:
+
+1)  Use create command to initialize account with bot
+
+2)  Use add [value] command to add money your balance
+
+3)  Use expense [type] [value] command to indicated amount spend, type refer to type of spending such as 'food'
+
+4)  Use check command to check your account balance and spending
+
+This bot are create with dialogflow so the command does not need to be exact, for instance, you may use 'setup' instead of create to initialize the account
