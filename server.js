@@ -27,10 +27,10 @@ User = require('./api/models/userListModel');
 History = require('./api/models/historyListModel');
 
 //Use router
-const etcRouter = require('./api/routes/etcRouter');
+const scgRouter = require('./api/routes/scgRouter');
 const lineRouter = require('./api/routes/lineRouter');
 
-app.use(etcRouter);
+app.use(scgRouter);
 app.use(lineRouter);
 
 //Use custom express error handler
