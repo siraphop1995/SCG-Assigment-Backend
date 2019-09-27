@@ -8,14 +8,14 @@ port = process.env.PORT || 3000;
 
 mongoose.Promise = global.Promise;
 mongoose.set('useCreateIndex', true);
-// mongoose.connect(
-//   'mongodb+srv://siraphop95:sira123456@cluster0-yejh3.gcp.mongodb.net/scgAssigment?retryWrites=true&w=majority',
-//   { useNewUrlParser: true, useUnifiedTopology: true },
-//   function(error) {
-//     if (error) throw error;
-//     console.log('Successfully connected to mongodb');
-//   }
-// );
+mongoose.connect(
+  'mongodb+srv://siraphop95:sira123456@cluster0-yejh3.gcp.mongodb.net/scgAssigment?retryWrites=true&w=majority',
+  { useNewUrlParser: true, useUnifiedTopology: true },
+  function(error) {
+    if (error) throw error;
+    console.log('Successfully connected to mongodb');
+  }
+);
 
 //Express middleware
 app.use(bodyParser.urlencoded({ extended: true }));

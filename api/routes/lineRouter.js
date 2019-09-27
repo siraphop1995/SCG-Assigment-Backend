@@ -1,6 +1,6 @@
 const router = require('express').Router();
-// const mongoose = require('mongoose');
-// const Users = mongoose.model('Users');
+const mongoose = require('mongoose');
+const Users = mongoose.model('Users');
 const line = require('@line/bot-sdk');
 const config = require('../../config.json');
 const { WebhookClient, Payload } = require('dialogflow-fulfillment');
@@ -8,7 +8,7 @@ const { Card, Suggestion } = require('dialogflow-fulfillment');
 
 const client = new line.Client(config);
 
-app.post('/webhook', (req, res) => {
+app.post('/webhook', (req, res, next) => {
   const agent = new WebhookClient({ request: req, response: res });
   console.log('WEBHOOK');
 
@@ -37,16 +37,61 @@ app.post('/webhook', (req, res) => {
   }
 
   //Create Intent Handler
-  function createAction(agent) {
+  async function createAction(agent) {
     const { data } = req.body.originalDetectIntentRequest.payload;
+
+    const user = await User.find({ lineId: data.source.userId }, null);
+    if (user.length >= 1) {
+      agent.add('You already have a wallet-bot account');
+      return agent.add('Use "help" command to see possible action');
+
+    }
+
     if (data.source.userId) {
       return client.getProfile(data.source.userId).then(profile => {
-        agent.add(`Display name: ${profile.displayName}`);
-        agent.add(`Status message: ${profile.statusMessage}`);
+        const payloadJson = {
+          type: 'template',
+          altText: `This is a buttons template `,
+          template: {
+            type: 'buttons',
+            title: 'Wallet-bot account setup',
+            text: `Do you wish to use "${profile.displayName}" as username?`,
+            actions: [{ label: 'Yes', type: 'message', text: 'yes' }, { label: 'No', type: 'message', text: 'no' }]
+          }
+        };
+
+        var payload = new Payload('LINE', payloadJson, {
+          sendAsMessage: true
+        });
+        agent.add(payload);
       });
     } else {
-      agent.add("Bot can't use profile API without user ID");
+      agent.add('Bot cannot use profile API without user ID');
     }
+  }
+
+  //Create - Yes Intent Handler
+  async function createYesAction(agent) {
+    try {
+      const { data } = req.body.originalDetectIntentRequest.payload;
+      const profile = await client.getProfile(data.source.userId);
+      let newUser = new User({
+        lineId: data.source.userId,
+        username: profile.displayName,
+        balance: 0
+      });
+      await newUser.save();
+      console.log(newUser);
+      agent.add('Account created successfully');
+      agent.add('Use "help" command to see possible action');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  //Create - No Intent Handler
+  function createNoAction(agent) {
+    agent.add('checkNo');
   }
 
   //Check Intent Handler
@@ -72,6 +117,8 @@ app.post('/webhook', (req, res) => {
   let intentMap = new Map();
   intentMap.set('Default Fallback Intent', defaultAction);
   intentMap.set('Create', createAction);
+  intentMap.set('Create - Yes', createYesAction);
+  intentMap.set('Create - No', createNoAction);
   intentMap.set('Check', checkAction);
   intentMap.set('Add', addAction);
   intentMap.set('Expense', expenseAction);
