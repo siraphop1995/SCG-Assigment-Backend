@@ -35,8 +35,12 @@ To use wallet-line-bot please use the following command:
 This bot are create with dialogflow so the command does not need to be exact, for instance, you may use 'setup' instead of create to initialize the account
 
 ###Example
-create
-add 50
-buy food 50
-spend snack 80
-check
+1) create
+
+2) add 50
+
+3) buy food 50
+
+4) spend snack 80
+
+5) check
